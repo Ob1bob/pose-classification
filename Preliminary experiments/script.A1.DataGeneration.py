@@ -4,6 +4,7 @@ import random
 import colorsys
 import numpy as np
 import pandas as pd
+from pathlib import Path
 from PIL import Image
 from matplotlib import pyplot
 from options import data_generate_options
@@ -173,11 +174,14 @@ def balance_data_set(df0, sit_indexes, stand_indexes, upper_limit):
 	return df2
 
 
-def plot_image(img, title):
+def plot_image(img, window_title, fig_title):
 	""" Simple plot image function that takes a 3D array of RGB pixel values """
 	pyplot.figure(figsize=(4, 4))
-	pyplot.title(title)
+	pyplot.title(fig_title)
 	pyplot.imshow(img)
+	man = pyplot.get_current_fig_manager()
+	man.canvas.set_window_title(window_title)
+
 	pyplot.show()
 
 
@@ -199,14 +203,14 @@ if __name__ == "__main__":
 	opt = data_generate_options()
 
 	# declare output directory paths
-	output_dir = os.path.join(opt.output, opt.dataset_name)
-	output_dir_samples = os.path.join(opt.output, opt.dataset_name, "image_samples")
+	output_dir = os.path.join(opt.output, Path(opt.input).stem)  # filename of input file is used as image output dir
+	output_dir_samples = os.path.join(opt.output, Path(opt.input).stem, "image_samples")
 	# create output directory paths
 	create_directory(output_dir)
 	create_directory(output_dir_samples)
 
 	# user feedback
-	print("Generating data set: " + opt.dataset_name)
+	print("Generating data set: " + Path(opt.input).stem)
 	print("Data set output location: " + output_dir)
 
 	# create three separate 2D arrays complete with column names & normalise coordinates
@@ -243,10 +247,11 @@ if __name__ == "__main__":
 	c_cor = c.round(6)
 	# class of each image
 	cl = df_balanced[[' class (number)']]
+	image_filename = df_balanced[['Filename']]
 
 	# adjust the x and y coordinates in relation to the height and width of the image size (pixels)
-	highest_x = x_cor.values.max()
-	highest_y = y_cor.values.max()
+	highest_x = x_cor.values.max()  # can also specify highest value as 1.0 (openpose localisation output format)
+	highest_y = y_cor.values.max()  # can also specify highest value as 1.0 (openpose localisation output format)
 	x_cor = ((x_cor - 0) / (highest_x - 0) * (opt.x_axis - 1)).round(0)
 	y_cor = ((y_cor - 0) / (highest_y - 0) * (opt.y_axis - 1)).round(0)
 
@@ -259,7 +264,7 @@ if __name__ == "__main__":
 
 	# generate pose data images and store them in lists within a dictionary
 	# declare dictionary with preset keys and null values
-	keys = ['baseline', 'dot', 'dot_conf', 'dot_conf_blended', 'cross', 'cross_conf', 'cross_conf_blended']
+	keys = ['baseline', 'dot', 'dot_blend', 'dot_blend_conf', 'cross', 'cross_blend', 'cross_blend_conf']
 	dict_image_lists = {key: [] for key in keys}
 
 	# colour code and map the key points/body joints to a generated image
@@ -290,11 +295,12 @@ if __name__ == "__main__":
 						plot_coor = get_dot_coordinates(x, y)
 					else:
 						plot_coor = get_diamond_coordinates(x, y, 1)
+					# plot the key point by colouring each individual pixel in its region
 					for x, y in plot_coor:
 						r0, g0, b0 = image[y, x]
 						if (r0 == g0 == b0 == 0) or (r0 == g0 == b0 == 255):
 							image[y, x] = (r, g, b)  # swap x & y coordinates (Python represents 3D array differently)
-						elif "blended" in key:
+						elif "blend" in key:
 							image[y, x] = mix_two_rgb(r, g, b, r0, g0, b0)
 
 			# Use PIL to create an image from the array of pixels
@@ -326,7 +332,7 @@ if __name__ == "__main__":
 						 "\tSit samples:\t{}\n\tStand samples:\t{}".format(key, len(sit_index), len(stand_index)))
 
 			# identify the index at which data is to be split between train and test sets
-			split_anchor_idx = round(len(sit_index) * 0.8)
+			split_anchor_idx = round(len(sit_index) * 0.8)  # 0.8 = 80% train; 20% test
 
 			train_index = sit_index[:split_anchor_idx] + stand_index[:split_anchor_idx]
 			test_index = sit_index[split_anchor_idx:] + stand_index[split_anchor_idx:]
@@ -335,9 +341,9 @@ if __name__ == "__main__":
 
 			# debug
 			for index in test_index:
-				plot_image(array_list[index], str(cl.values[index]))
+				plot_image(array_list[index], str(image_filename.values[index]), key)  # str(cl.values[index])
 			for index in train_index:
-				plot_image(array_list[index], str(cl.values[index]))
+				plot_image(array_list[index], str(image_filename.values[index]), key)
 
 			# convert train & test data sets to 1D arrays and write them to file
 			train_set = []
@@ -346,7 +352,7 @@ if __name__ == "__main__":
 				train_set.append(np.concatenate([cl.values[index], np.concatenate(array_list[index]).ravel()]))
 			test_set = []
 			for index in test_index:
-				test_set.append(np.concatenate([cl.values[index], np.concatenate(img_set_list[index]).ravel()]))
+				test_set.append(np.concatenate([cl.values[index], np.concatenate(array_list[index]).ravel()]))
 			# write the arrays to file
 			csv_out_train = os.path.join(output_dir, key + "-TRAIN.csv")
 			csv_out_test = os.path.join(output_dir, key + "-TEST.csv")
