@@ -1,2 +1,6 @@
 
 Preliminary experiments/__pycache__/options.cpython-36.pyc
+*.png
+*.csv
+*.txt
+Primary experiments/script.2.DataGen.RGBA.1.0.2.py
