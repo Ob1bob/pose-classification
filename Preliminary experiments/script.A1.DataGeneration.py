@@ -11,7 +11,7 @@ from options import data_generate_options
 
 
 def create_directory(path):
-	""" Create directories in the path if they don't exist """
+	""" Create directories in the path that don't exist """
 	if not os.path.exists(path):
 		os.makedirs(path)
 
