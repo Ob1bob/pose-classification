@@ -5,7 +5,6 @@ import pandas as pd
 from matplotlib import pyplot
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation, Flatten, BatchNormalization
-#from keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D, BatchNormalization, Activation
 from keras.layers import Conv2D, MaxPooling2D
 from keras.callbacks import TensorBoard
 from keras.preprocessing.image import ImageDataGenerator
@@ -15,30 +14,42 @@ from options import exploration_options
 
 
 def plot_image(img):
-    """ simple plot image function that takes a 3D array of RGB pixel values """
+    """
+    This function displays an image using the matplotlib library. It takes a 3D array
+    representing the image's RGB pixel values and plots the image using pyplot.
+
+    Args:
+        img (numpy.ndarray):    The image represented as a 3D array of RGB pixel values.
+    """
     pyplot.imshow(img)
     pyplot.show()
 
 
-def get_session(gpu_fraction=0.333):
-    """ returns a TensorFlow session with a specified fraction of GPU memory allocated for use """
-    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=gpu_fraction)  # tf.GPUOptions(per_process_gpu_memory_fraction=gpu_fraction, allow_growth=True)
-    return tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
-
-
-def get_index(x):
-    """ standardise the conv_layer value so that it it points to a valid index for the layer sizes """
-    lower_bound = 0
-    upper_bound = len(layer_sizes)-1
-    highest_x_index = len(conv_layers)-1
-    new_index = (upper_bound-lower_bound) * ((x - lower_bound) / (highest_x_index - lower_bound)) + lower_bound
-    return round(new_index)
-
-
 def create_directory(path):
-    """ create directories in the path if they don't exist """
+    """
+    This function creates a directory if it does not exist.
+
+    Args:
+        path (str):     The directory path to be created.
+    """
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+def get_session(gpu_fraction=0.333):
+    """
+    Create and return a TensorFlow session with customizable GPU memory allocation settings
+    based on the specified GPU fraction. The fraction determines the portion of available
+    GPU memory that TensorFlow can use for a single process (session).
+
+    Args:
+        gpu_fraction (float, optional):     The fraction of GPU memory to allocate (default is 0.333).
+
+    Returns:
+        tf.Session: A TensorFlow session with the specified GPU memory allocation settings.
+    """
+    gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=gpu_fraction)  # tf.GPUOptions(per_process_gpu_memory_fraction=gpu_fraction, allow_growth=True)
+    return tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 
 
 if __name__ == "__main__":

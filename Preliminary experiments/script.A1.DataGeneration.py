@@ -11,30 +11,63 @@ from options import data_generate_options
 
 
 def create_directory(path):
-	""" Create directories in the path that don't exist """
+	"""
+	Create directories in the specified path does not exist.
+
+	Args:
+		path (str): Path of the directory to be created.
+	"""
 	if not os.path.exists(path):
 		os.makedirs(path)
 
 
-def get_spaced_hex_colours(n):
-	""" Returns a list of evenly spaced hexadecimal color codes based on the HSV color space """
-	hsv_tuples = [(x * 1.0 / n, 0.5, 0.5) for x in range(n)]
+def get_spaced_hex_colours(N):
+	"""
+	Generate visually distinct colours evenly distributed in the HSV colour space.
+
+	Args:
+		N (int): The number of distinct colours to generate.
+
+	Returns:
+		list: A list of hex colour codes representing visually distinct colours.
+	"""
+	HSV_tuples = [(x * 1.0 / N, 1.0, 1.0) for x in range(N)]
 	hex_out = []
-	for rgb in hsv_tuples:
+	for rgb in HSV_tuples:
 		rgb = map(lambda x: int(x * 255), colorsys.hsv_to_rgb(*rgb))
 		hex_out.append('#%02x%02x%02x' % tuple(rgb))
 	return hex_out
 
 
 def hex_to_rgb(hex):
-	""" Converts a hexadecimal color code to an RGB tuple """
+	"""
+	Convert a hexadecimal colour code into an RGB tuple,
+	representing the corresponding red, green, and blue colour components.
+
+	Args:
+		hex_code (str): 	The hexadecimal colour code to be converted.
+
+	Returns:
+		tuple: An RGB tuple containing the red, green, and blue colour components.
+	"""
 	hex = hex.lstrip('#')
 	h_length = len(hex)
 	return tuple(int(hex[i:i + h_length // 3], 16) for i in range(0, h_length, h_length // 3))
 
 
 def calculate_lightness(lightness, r, g, b):
-	""" Applies a lightness transformation to an RGB color """
+	"""
+	Apply a tint transformation to an RGB color.
+
+	Args:
+		lightness (float): 	tint parameter (e.g., between 0 and 1).
+		r (int): 			Red channel value (0-255).
+		g (int): 			Green channel value (0-255).
+		b (int): 			Blue channel value (0-255).
+
+	Returns:
+		tuple: Transformed RGB color tuple.
+	"""
 	lightness = (lightness - 1)  # reverse confidence
 	lightness = ((lightness - 0) / (0.1 - 0)) * (0.02 - 0.1) + 0  # normalise
 	# l = l/100 # turn into percentage
@@ -56,7 +89,20 @@ def calculate_lightness(lightness, r, g, b):
 
 
 def mix_two_rgb(r1, g1, b1, r2, g2, b2):
-	""" Calculates the average of two RGB colors """
+	"""
+	Calculate the average of two RGB colors.
+
+	Args:
+		r1 (int): 	Red channel value of color 1 (0-255).
+		g1 (int): 	Green channel value of color 1 (0-255).
+		b1 (int): 	Blue channel value of color 1 (0-255).
+		r2 (int): 	Red channel value of color 2 (0-255).
+		g2 (int): 	Green channel value of color 2 (0-255).
+		b2 (int): 	Blue channel value of color 2 (0-255).
+
+	Returns:
+		tuple: Average RGB color tuple.
+	"""
 	tmp_r = (r1 * 0.5) + (r2 * 0.5)
 	tmp_g = (g1 * 0.5) + (g2 * 0.5)
 	tmp_b = (b1 * 0.5) + (b2 * 0.5)
@@ -74,17 +120,32 @@ def mix_two_rgb(r1, g1, b1, r2, g2, b2):
 
 
 def get_dot_coordinates(x, y):
-	""" Returns the x, y coordinate as a tuple """
+	"""
+	Returns the x, y coordinate as a tuple of dot format body key point to be mapped onto an image
+
+	Args:
+		x (int): 	The x-coordinate of the point.
+		y (int): 	The y-coordinate of the point.
+
+	Returns:
+		tuple: A tuple containing the x and y coordinates.
+	"""
 	arr_out = [(x, y)]
 	return arr_out
 
 
 def get_diamond_coordinates(x, y, d):
-	""" Generates a set of coordinates forming a diamond shape around a central point
+	"""
+	Generates a set of coordinates forming a diamond shape around a central point (x, y) with
+	the given diamond diameter (d) as a body key point to be mapped onto an image
 
-	Arguments:
-		x, y : coordinates of the central point
-		d 	 : distance (size) of the diamond
+	Args:
+		x (int): 	The x-coordinate of the central point.
+		y (int): 	The y-coordinate of the central point.
+		d (int): 	The diameter of the diamond (distance from the center to each corner).
+
+	Returns:
+		list: A list of coordinate tuples representing the generated diamond shape.
 	"""
 	arr_out = []
 
@@ -124,11 +185,17 @@ def get_diamond_coordinates(x, y, d):
 
 
 def get_crosshair_coordinates(x, y, d):
-	""" Generates a set of coordinates forming a crosshair shape around a central point
+	"""
+	Generates a set of coordinates that form a cross-hair shape centered around the specified
+	point (x, y) with the given diameter (d). as a body key point to be mapped onto an image.
 
-	Arguments:
-		x, y : coordinates of the central point
-		d 	 : distance (size) of the crosshair
+	Args:
+		x (int): 	The x-coordinate of the central point.
+		y (int): 	The y-coordinate of the central point.
+		d (int): 	The diameter of the cross-hair.
+
+	Returns:
+		list: A list of tuples representing the generated coordinates.
 	"""
 	arr_out = []
 
@@ -159,7 +226,18 @@ def get_crosshair_coordinates(x, y, d):
 
 
 def balance_data_set(df0, sit_indexes, stand_indexes, upper_limit):
-	""" Balances a data set by selecting an equal number of samples from the "sit" and "stand" classes """
+	"""
+	Balances a data set by selecting an equal number of samples from the "sit" and "stand" classes.
+
+	Args:
+		df0 (pandas.DataFrame): 	The original DataFrame containing the data.
+		sit_indexes (list): 		Indexes of samples from the "sit" class.
+		stand_indexes (list): 		Indexes of samples from the "stand" class.
+		upper_limit (int): 			The maximum number of samples to be selected from each class.
+
+	Returns:
+		pandas.DataFrame: The balanced DataFrame containing selected samples.
+	"""
 	sit_index = sit_indexes[:upper_limit]  # restrict the number of samples to the same sample size
 	stand_index = stand_indexes[:upper_limit]
 	# throw indexes together that refer to the samples that will be used
@@ -175,18 +253,34 @@ def balance_data_set(df0, sit_indexes, stand_indexes, upper_limit):
 
 
 def plot_image(img, window_title, fig_title):
-	""" Simple plot image function that takes a 3D array of RGB pixel values """
+	"""
+	Simple plot image function that takes a 3D array of RGB pixel values and displays it using matplotlib.
+
+	Args:
+		img (numpy.ndarray): 	The image array to be displayed.
+		window_title (str): 	The title to be displayed in the window's title bar.
+		fig_title (str): 		The title to be displayed above the image.
+	"""
 	pyplot.figure(figsize=(4, 4))
 	pyplot.title(fig_title)
 	pyplot.imshow(img)
 	man = pyplot.get_current_fig_manager()
 	man.canvas.set_window_title(window_title)
-
+	# display plot
 	pyplot.show()
 
 
 def divide_data_by_class(df):
-	""" Compile two arrays that contain the indexes of sitting or standing instances """
+	"""
+	Divide instances in a DataFrame into "sitting" and "standing" classes and return their indexes.
+
+	Args:
+		df (pandas.DataFrame): 	The DataFrame containing the data, with a "class (number)" column.
+
+	Returns:
+		sit_indexes (list): 	List of indexes corresponding to instances of the "sitting" class.
+		stand_indexes (list): 	List of indexes corresponding to instances of the "standing" class.
+	"""
 	cl = df[[' class (number)']]
 	sit_indexes = []
 	stand_indexes = []
@@ -319,7 +413,8 @@ if __name__ == "__main__":
 	# divide img sets into training and test sets and write to file
 	# Iterate over the dictionary to obtain each array under a specific key
 	for key, img_set_list in dict_image_lists.items():
-		# iterte over image_set to overwrite train & test sets with image along with its class which is in order of the image_set
+		# iterate over image_set to overwrite train & test sets with image
+		# along with its class which is in order of the image_set
 		sit_index = []
 		stand_index = []
 		for array_list in img_set_list:

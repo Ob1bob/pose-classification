@@ -1,54 +1,110 @@
 from __future__ import print_function
-from matplotlib import pyplot
-from PIL import Image
-import pandas as pd
-import numpy as np
-import configparser
-import colorsys
-import math
-import cv2
-import sys
-import gc
+
 import os
+import gc
+import sys
+import cv2
+import math
+import colorsys
+import configparser
+import numpy as np
+import pandas as pd
+from PIL import Image
+from matplotlib import pyplot
 
 
 def display_RGB_image(win_title, rgb_image):
-	# cv2 handles images in BGR channel order - therefore, to display RGB correctly, the image must be converted
+	"""
+	Display an RGB image using OpenCV, converting it to BGR channel order.
+
+	Args:
+		win_title (str): 			The title for the image display window.
+		rgb_image (numpy.ndarray): 	The RGB image represented as a NumPy array.
+	"""
 	cv2.imshow(win_title, cv2.cvtColor(rgb_image, cv2.COLOR_RGB2BGR))
 	cv2.waitKey(1)
 
 
 def display_DEPTH_image(win_title, depth_image):
-	# cv2 handles images in BGR channel order - therefore, to display RGB correctly, the image must be converted
+	"""
+	This function takes a depth image and displays it using the OpenCV library.
+
+	Args:
+		win_title (str): 				The title for the image display window.
+		depth_image (numpy.ndarray): 	The depth image represented as a NumPy array.
+	"""
 	cv2.imshow(win_title, depth_image)
 	cv2.waitKey(1)
 
 
 def create_directories(paths):
-	""" Create directories in the path that don't exist """
+	"""
+	This function checks each path in the input list and creates the directories
+	if they are not already present. It ensures that the specified paths are available
+	for storing files or other data.
+
+	Args:
+		paths (list):   List of directory paths to be created.
+	"""
 	for path in paths:
 		if not os.path.exists(path):
 			os.makedirs(path)
 
 
 def filter_greyscale(image):
-	""" Convert an image from the BGR color space (used by OpenCV) to greyscale """
+	"""
+	This function takes an image in the BGR color space (used by OpenCV) and converts
+	it to greyscale using the cv2.COLOR_BGR2GREY conversion.
+
+	Args:
+		image (numpy.ndarray): 	The input image represented as a NumPy array.
+
+	Returns:
+		numpy.ndarray: The greyscale version of the input image.
+	"""
 	return cv2.cvtColor(image, cv2.COLOR_BGR2GREY)
 
 
 def filter_gaussian(image):
-	""" Applies Gaussian blur to smooth image and reduce noise & image detail """
+	"""
+	Apply Gaussian blur to an image for noise reduction and smoothing
+	that reduces noise and image details.
+
+	Args:
+		image (numpy.ndarray): The input image represented as a NumPy array.
+
+	Returns:
+		numpy.ndarray: The image after applying Gaussian blur.
+	"""
 	return cv2.GaussianBlur(image, (11, 11), 0)
 
 
 def filter_median(image):
-	""" Applies a median blur to smooth image by replacing each pixel's value with the
-	median value of its neighbouring pixels and reduces salt & pepper effect """
+	"""
+	Applies a median blur to the input image, which replaces each pixel's value
+	with the median value of its neighboring pixels. This helps in reducing noise and mitigating
+	the salt and pepper effect in the image.
+
+	Args:
+		image (numpy.ndarray): The input image represented as a NumPy array.
+
+	Returns:
+		numpy.ndarray: The image after applying median blur.
+	"""
 	return cv2.medianBlur(image, 3)  # specifically for depth images
 
 
 def fixed_BG_SUB(im, bg):
-	""" Performs fixed background subtraction to separate foreground objects from a static background in an image """
+	"""
+	Perform fixed background subtraction to separate foreground objects from a static background in an image.
+
+	Args:
+		im (numpy.ndarray): 	The input image represented as a NumPy array.
+		bg (numpy.ndarray): 	The background image represented as a NumPy array.
+
+	Returns:
+		image tuple: A tuple containing the binary mask and the extracted foreground image.
+	"""
 	if len(im.shape) == 3:  # RGB IMAGE
 		# absolute difference between the the video frame and its background image is computed
 		im_sub = cv2.absdiff(filter_gaussian(filter_greyscale(im)), filter_gaussian(filter_greyscale(bg)))
@@ -76,7 +132,15 @@ def fixed_BG_SUB(im, bg):
 
 
 def adaptive_BG_SUB(im):
-	""" Adaptive background subtraction extracts moving objects from a varying or changing background """
+	"""
+	Perform adaptive background subtraction to extract moving objects from a changing background.
+
+	Args:
+		im (numpy.ndarray): 	The input image represented as a NumPy array.
+
+	Returns:
+		image tuple: A tuple containing the binary mask and the extracted foreground image.
+	"""
 	learning_rate = 0.004  # float(set_num)/frame_history
 	if len(im.shape) == 3:  # RGB image
 		# apply adaptive background subtraction using OpenCV class
@@ -101,23 +165,56 @@ def adaptive_BG_SUB(im):
 
 
 def stack_layers(im_rgb, im_depth):
-	""" Stacks two images together along the depth (channel) dimension to create a new composite image (4D array) """
+	"""
+	Stack two images along the depth (channel) dimension to create a composite image.
+
+	Args:
+		im_rgb (numpy.ndarray): 	The RGB image represented as a NumPy array.
+		im_depth (numpy.ndarray): 	The depth image represented as a NumPy array.
+
+	Returns:
+		numpy.ndarray: The composite image resulting from stacking the input images.
+	"""
 	return np.dstack((im_rgb, im_depth))
 
 
 def unstack_layers(im_4d):
-	""" Separates the first three channels (RGB) and fourth cahneel (depth) from a stacked 4D array """
+	"""
+	Separate RGB and depth channels from a stacked 4D array.
+
+	Args:
+		im_4d (numpy.ndarray): The stacked 4D array representing the composite image.
+
+	Returns:
+		numpy.ndarray: A 3D array containing the separated RGB channels and depth channel.
+	"""
 	return np.dstack((im_4d[:, :, 0:2], im_4d[:, :, 3]))
 
 
 def stack_toString(im_class, im_stack):
-	""" flatten the image array and concatenate the class label to a comma-separated string of values """
+	"""
+	Flatten an image array and concatenate the class label to create a comma-separated string.
+
+	Args:
+		im_class (int):				The class label.
+		im_stack (numpy.ndarray): 	The stacked 3D/4D image array represented as a NumPy array.
+
+	Returns:
+		str: A comma-separated string containing the class label and flattened image values.
+	"""
 	arr_out = np.concatenate([im_class, im_stack.reshape(-1)])  # append class to flattened image array
 	return ','.join('%d' % x for x in arr_out)
 
 
 def print_stats(df_keypoints, stats_file):
-	""" Report the number of data samples by class both to command-line and log file """
+	"""
+	This function takes a DataFrame containing data samples with class labels and a statistics file,
+	and reports the number of data samples by class both to the console and the specified log file.
+
+	Args:
+		df_keypoints (pandas.DataFrame): 	The DataFrame containing data samples and class labels.
+		stats_file (file): 					The log file where the statistics will be written.
+	"""
 	class_mapping = {
 		1: 'Stand',
 		2: 'Sit',
@@ -153,7 +250,15 @@ def print_stats(df_keypoints, stats_file):
 
 
 def get_spaced_hex_colours(N):
-	""" Generate visually distinct colours that are evenly distributed in the HSV colour space """
+	"""
+	Generate visually distinct colours evenly distributed in the HSV colour space.
+
+	Args:
+		N (int): The number of distinct colours to generate.
+
+	Returns:
+		list: A list of hex colour codes representing visually distinct colours.
+	"""
 	HSV_tuples = [(x * 1.0 / N, 1.0, 1.0) for x in range(N)]
 	hex_out = []
 	for rgb in HSV_tuples:
@@ -163,14 +268,32 @@ def get_spaced_hex_colours(N):
 
 
 def hex_to_rgb(hex):
-	""" Convert a hexadecimal colour code into an RGB tuple """
+	"""
+	Convert a hexadecimal colour code into an RGB tuple,
+	representing the corresponding red, green, and blue colour components.
+
+	Args:
+		hex_code (str): 	The hexadecimal colour code to be converted.
+
+	Returns:
+		tuple: An RGB tuple containing the red, green, and blue colour components.
+	"""
 	hex = hex.lstrip('#')
 	hlen = len(hex)
 	return tuple(int(hex[i:i + hlen // 3], 16) for i in range(0, hlen, hlen // 3))
 
 
 def get_spaced_rgb_colours(N):
-	""" Generates a list of spaced RGB colours obtained from the HSV colour space """
+	"""
+	Generate a list of spaced RGB colours obtained from the HSV colour space,
+	and then converting them into RGB tuples.
+
+	Args:
+		N (int): 	The number of spaced RGB colours to generate.
+
+	Returns:
+		list: A list of RGB tuples representing spaced colours.
+	"""
 	spacedRGB = []
 	spacedHex = get_spaced_hex_colours(N)
 	for hex in spacedHex:
@@ -179,9 +302,23 @@ def get_spaced_rgb_colours(N):
 	return spacedRGB
 
 
-# rgb operates on additive colour channels
 def mix_two_rgb(r1, g1, b1, r2, g2, b2):
-	""" Blends RGB colours by taking an equal weighted average of their respective R, G, and B components """
+	"""
+	Calculate the blended RGB colour by taking an equal weighted average of the corresponding
+	red, green, and blue components of two input RGB colours. If the calculated value exceeds 255.
+	The components are restricted to 255 to ensure valid RGB colour values.
+
+	Args:
+		r1 (int): The red component of the first RGB colour (0-255).
+		g1 (int): The green component of the first RGB colour (0-255).
+		b1 (int): The blue component of the first RGB colour (0-255).
+		r2 (int): The red component of the second RGB colour (0-255).
+		g2 (int): The green component of the second RGB colour (0-255).
+		b2 (int): The blue component of the second RGB colour (0-255).
+
+	Returns:
+		tuple: An RGB tuple representing the blended colour.
+	"""
 	tmp_r = (r1 * 0.5) + (r2 * 0.5)
 	tmp_g = (g1 * 0.5) + (g2 * 0.5)
 	tmp_b = (b1 * 0.5) + (b2 * 0.5)
@@ -198,7 +335,19 @@ def mix_two_rgb(r1, g1, b1, r2, g2, b2):
 
 
 def get_radial_gradient(x, y, cx, cy):
-	"""  Generate radial color gradient based on the position (x, y) relative to a center point (cx, cy) """
+	"""
+	Calculates a radial color gradient by mapping the position (x, y) relative to a center
+	point (cx, cy) to an HSV hue value. The hue value is then converted to an RGB color.
+
+	Args:
+		x (int): 	The x-coordinate of the point for which the radial gradient color is generated.
+		y (int): 	The y-coordinate of the point for which the radial gradient color is generated.
+		cx (int): 	The x-coordinate of the center point of the radial gradient.
+		cy (int): 	The y-coordinate of the center point of the radial gradient.
+
+	Returns:
+		tuple: An RGB tuple representing the color gradient at the given point.
+	"""
 	rx = x - cx
 	ry = y - cy
 	h = ((math.atan2(ry, rx) / math.pi) + 2.17) / 2.0
@@ -206,9 +355,20 @@ def get_radial_gradient(x, y, cx, cy):
 	return tuple([int(round(c * 255.0)) for c in rgb])
 
 
-# wheel segment
 def get_radial_segment(x, y, cx, cy):
-	"""  Generate radial colour segments based on the position (x, y) relative to a center point (cx, cy) """
+	"""
+	Calculates a radial color segment by mapping the position (x, y) relative to a center
+	point (cx, cy) to an HSV hue value. The hue value is then converted to an RGB color.
+
+	Args:
+		x (int): 	The x-coordinate of the point for which the radial segment color is generated.
+		y (int): 	The y-coordinate of the point for which the radial segment color is generated.
+		cx (int): 	The x-coordinate of the center point of the radial segment.
+		cy (int): 	The y-coordinate of the center point of the radial segment.
+
+	Returns:
+		tuple: An RGB tuple representing the color segment at the given point.
+	"""
 	rx = x - cx
 	ry = y - cy
 	h = ((math.atan2(ry, rx) / math.pi) - 2.0) / 2.0
@@ -224,7 +384,19 @@ def get_radial_segment(x, y, cx, cy):
 
 
 def get_ring_gradient(x, y, cx, cy):
-	""" Generate circular colour gradient based on the position (x, y) relative to a center point (cx, cy) """
+	"""
+	Calculates a ringed circular colour gradient by mapping the distance between the position (x, y)
+	and	the center point (cx, cy) to an HSV hue value. The hue value is then converted to an RGB colour.
+
+	Args:
+		x (int): 	The x-coordinate of the point for which the ring gradient color is generated.
+		y (int): 	The y-coordinate of the point for which the ring gradient color is generated.
+		cx (int): 	The x-coordinate of the center point of the ring gradient.
+		cy (int): 	The y-coordinate of the center point of the ring gradient.
+
+	Returns:
+		tuple: An RGB tuple representing the colour of the circular gradient at the given point.
+	"""
 	rx = x - cx
 	ry = y - cy
 	h = np.sqrt(rx ** 2.0 + ry ** 2.0)
@@ -235,7 +407,19 @@ def get_ring_gradient(x, y, cx, cy):
 
 
 def get_ring_segment(x, y, cx, cy):
-	"""  Generate circular colour segments based on the position (x, y) relative to a center point (cx, cy) """
+	"""
+	Calculates a ringed and segmented circular color gradient by mapping the distance between the position (x, y)
+	and	the center point (cx, cy) to an HSV hue value. The hue value is then converted to an RGB colour.
+
+	Args:
+		x (int): 	The x-coordinate of the point for which the ring segment color is generated.
+		y (int): 	The y-coordinate of the point for which the ring segment color is generated.
+		cx (int): 	The x-coordinate of the center point of the ring segment.
+		cy (int): 	The y-coordinate of the center point of the ring segment.
+
+	Returns:
+		tuple: An RGB tuple representing the color of the circular segment at the given point.
+	"""
 	radius = min(x_axis, y_axis) / 2
 	cx = cx - 0.5
 	cy = cy - 0.5
@@ -263,8 +447,19 @@ def get_ring_segment(x, y, cx, cy):
 	return tuple([int(round(c * 255.0)) for c in rgb])
 
 
-def generate_color_plot(plot_type, centroid):
-	""" Generates an image with the specified type of colour plot and returns the resulting image as a NumPy array """
+def generate_colour_plot(plot_type, centroid):
+	"""
+	Generates a color plot based on the specified plot type and the centroid position. The color plot
+	is created by mapping colors to each pixel in the image based on its location relative to the centroid.
+
+	Args:
+		plot_type (str): 	The type of color plot to generate.
+							Valid options are 'radial_gradient', 'radial_segment', 'ring_gradient', and 'ring_segment'
+		centroid (tuple): 	A tuple containing the x and y coordinates of the centroid point.
+
+	Returns:
+		numpy.ndarray: A NumPy array representing the generated color plot image.
+	"""
 	im = np.full((y_axis, x_axis, 3), BG_colour)
 	cx, cy = centroid
 
@@ -290,7 +485,17 @@ def generate_color_plot(plot_type, centroid):
 
 
 def generate_augmentation_illustrations(dir):
-	""" Generate each of the colour wheel augmentations to illustrate their layout """
+	"""
+	Generates an image of each type of augmentation colour plot to illustrate their layout.
+
+	Args:
+		plot_type (str): 	The type of color plot to generate.
+							Valid options are 'radial_gradient', 'radial_segment', 'ring_gradient', and 'ring_segment'
+		centroid (tuple): A tuple containing the x and y coordinates of the centroid point.
+
+	Returns:
+		numpy.ndarray: A NumPy array representing the generated color plot image.
+	"""
 	for plot_type in data_types[2:]:
 		cx, cy = x_axis / 2, y_axis / 2
 		bg_im = generate_color_plot(plot_type, (cx, cy))
@@ -298,13 +503,33 @@ def generate_augmentation_illustrations(dir):
 
 
 def get_dot_coordinates(x, y):
-	""" Returns the x, y coordinate as a tuple """
+	"""
+	Returns the x, y coordinate as a tuple of dot format body key point to be mapped onto an image
+
+	Args:
+		x (int): 	The x-coordinate of the point.
+		y (int): 	The y-coordinate of the point.
+
+	Returns:
+		tuple: A tuple containing the x and y coordinates.
+	"""
 	arr_out = [(x, y)]
 	return arr_out
 
 
 def get_diamond_coordinates(x, y, d):
-	""" Generates a set of coordinates forming a diamond shape around a central point """
+	"""
+	Generates a set of coordinates forming a diamond shape around a central point (x, y) with
+	the given diamond diameter (d) as a body key point to be mapped onto an image
+
+	Args:
+		x (int): 	The x-coordinate of the central point.
+		y (int): 	The y-coordinate of the central point.
+		d (int): 	The diameter of the diamond (distance from the center to each corner).
+
+	Returns:
+		list: A list of coordinate tuples representing the generated diamond shape.
+	"""
 	arr_out = []
 
 	# create diamond shape
@@ -342,7 +567,18 @@ def get_diamond_coordinates(x, y, d):
 
 
 def get_crosshair_coordinates(x, y, d):
-	""" Generates a set of coordinates forming a crosshair shape around a central point """
+	"""
+	Generates a set of coordinates that form a cross-hair shape centered around the specified
+	point (x, y) with the given diameter (d). as a body key point to be mapped onto an image.
+
+	Args:
+		x (int): 	The x-coordinate of the central point.
+		y (int): 	The y-coordinate of the central point.
+		d (int): 	The diameter of the cross-hair.
+
+	Returns:
+		list: A list of tuples representing the generated coordinates.
+	"""
 	arr_out = [(x, y)]
 
 	# create cross shape
@@ -351,6 +587,10 @@ def get_crosshair_coordinates(x, y, d):
 		# right
 		if 0 <= x + stride < x_axis:
 			arr_out.append((x + stride, y))
+			# create a thicker line
+			# for i in range(math.trunc(d/3)+1):
+			# 	arr_out.append((x + stride, y + i))
+			# 	arr_out.append((x + stride, y - i))
 
 		# left
 		if 0 <= x - stride < x_axis:
@@ -369,7 +609,14 @@ def get_crosshair_coordinates(x, y, d):
 
 
 def plot_image(title, img):
-	""" Simple plot image function that takes a 3D array of RGB pixel values """
+	"""
+	This function displays the input image along with the specified title.
+	The axis is turned off to provide a clean image display.
+
+	Args:
+		title (str): The title to be displayed above the image.
+		img (numpy.ndarray): A 3D array representing the RGB pixel values of the image.
+	"""
 	pyplot.imshow(img)
 	pyplot.title(title)
 	pyplot.axis('off')
@@ -377,14 +624,26 @@ def plot_image(title, img):
 
 
 def get_coordinates_shape(x, y, d=2):
-	""" Elect a coordinate shape that is to be used throughout the script """
+	""" Specify a chosen coordinate shape that is to be used throughout the script """
 	# return get_dot_coordinates(x, y)
 	# return get_diamond_coordinates(x, y, d)
 	return get_crosshair_coordinates(x, y, d)
 
 
 def plot_rgb_coordinates(image, coordinates, colour):
-	""" Modify image by changing rgb colour values at specific coordinates """
+	"""
+	This function takes an input image, a list of (x, y) coordinates, and an RGB color value.
+	It modifies the image by either setting the RGB color at the specified coordinates to the provided
+	color or blending it with the existing color if a color is already present at those coordinates.
+
+	Args:
+		image (numpy.ndarray): 	A 3D array representing the RGB pixel values of the image.
+		coordinates (list): 	A list of (x, y) coordinates to modify.
+		colour (tuple): 		An RGB color value (r, g, b) to set or blend.
+
+	Returns:
+		numpy.ndarray: The modified image.
+	"""
 	r, g, b = colour
 	for x, y in coordinates:
 		r0, g0, b0 = image[y, x]
@@ -396,7 +655,19 @@ def plot_rgb_coordinates(image, coordinates, colour):
 
 
 def plot_monochrome_coordinates(image, coordinates, mono_shade):
-	""" Modify image by changing the shade (brightness value) of specified coordinates """
+	"""
+	This function takes an input image, a list of (x, y) coordinates, and a monochrome shade value.
+	It modifies the image by either setting the shade at the specified coordinates to the provided
+	monochrome shade or blending it with the existing shade if a shade is already present at those coordinates.
+
+	Args:
+		image (numpy.ndarray): 	A 2D array representing the monochrome pixel values of the image.
+		coordinates (list): 	A list of (x, y) coordinates to modify.
+		mono_shade (int): 		A monochrome shade value to set or blend.
+
+	Returns:
+		numpy.ndarray: The modified image.
+	"""
 	for x, y in coordinates:
 		m0 = image[y, x]
 		if m0 == BG_colour:
@@ -407,7 +678,18 @@ def plot_monochrome_coordinates(image, coordinates, mono_shade):
 
 
 def overlay_mask_on_image(fg, mask):
-	""" Overlays a mask of key points onto a foreground image at corresponding pixel coordinates """
+	"""
+	This function takes a foreground image and a mask of key points (possibly with color channels)
+	and overlays the mask onto the foreground image at corresponding pixel coordinates. It modifies
+	the foreground image by replacing pixels with key points from the mask.
+	
+	Args:
+		foreground (numpy.ndarray): 	A 3D array representing the foreground image (RGB or greyscale).
+		mask (numpy.ndarray): 			A 3D or 2D array representing the mask of key points (RGB or greyscale).
+	
+	Returns:
+		numpy.ndarray: The modified foreground image with the mask overlay.
+	"""
 	for x in range(mask.shape[1]):
 		for y in range(mask.shape[0]):
 			if mask.ndim == 3:
@@ -420,7 +702,17 @@ def overlay_mask_on_image(fg, mask):
 
 
 def crop_image(image, centroid):
-	""" Determine an appropriate crop region (by rule of thirds) based on the centroid position of the human silhouette """
+	"""
+	This function calculates an appropriate crop region based on the centroid position of the silhouette
+	in the image using the rule of thirds.
+
+	Args:
+		image (numpy.ndarray): 	The input image to be cropped (RGB or greyscale).
+		centroid (tuple): 		A tuple containing the x and y coordinates of the body centroid.
+
+	Returns:
+		numpy.ndarray: The cropped image.
+	"""
 	x_centroid, y_centroid = centroid
 	x_diff = x_axis-x_crop
 	y_diff = y_axis-y_crop
@@ -456,24 +748,32 @@ def crop_image(image, centroid):
 				y_start = y_diff
 				y_end = y_axis
 
-	if image.ndim == 3: # RGB image
+	if image.ndim == 3:  # RGB image
 		image = image[int(y_start):int(y_end), int(x_start):int(x_end), :]
-	else: # Depth image
+	else:  # Depth image
 		image = image[int(y_start):int(y_end), int(x_start):int(x_end)]
 	return image
 
 
 def generate_representation(df, centroid_coor, fg_rgb, fg_depth, datatype):
-	""" Generates data samples through background subtraction and key point plotting
+	"""
+	Generates data samples through background subtraction and key point plotting
+
+	Args:
+		df (pandas.DataFrame): 		DataFrame containing key point coordinates and confidences.
+		centroid_coor (tuple): 		Coordinates of the centroid.
+		fg_rgb (numpy.ndarray): 	Foreground RGB image obtained through background subtraction.
+		fg_depth (numpy.ndarray):	Foreground depth image obtained through background subtraction.
+		datatype (int): 			Chosen augmentation type.
 
 	Returns:
+		Tuple of NumPy arrays (numpy.ndarray)
 		foreground RGB image	: BG subtracted result of original RGB video frame
 		foreground depth image	: BG subtracted result of original depth video frame
 		key point RGB mask		: Key point plot derived from chosen colour-based augmentation
 		key point depth mask	: Key point plot of white pixel values
 		cutout image			: Key point plotting against the colour wheel-based augmentation for illustrative purposes
 	"""
-
 	if datatype == 0:  # baseline (requires no augmentation)
 		return fg_rgb, fg_depth, fg_rgb, fg_depth, None
 
@@ -529,7 +829,18 @@ def generate_representation(df, centroid_coor, fg_rgb, fg_depth, datatype):
 
 
 def identify_body_centroid(cor_x, cor_y, cor_conf, class_df):
-	""" Identify the body centroid as the midpoint between the neck (1), R-hip (8), and L-hip (11) coordinates """
+	"""
+	Identify the body centroid as the midpoint between the neck (1), R-hip (8), and L-hip (11) coordinates.
+
+	Args:
+		cor_x (pandas.DataFrame): 		DataFrame containing x-coordinates of key points.
+		cor_y (pandas.DataFrame): 		DataFrame containing y-coordinates of key points.
+		cor_conf (pandas.DataFrame): 	DataFrame containing confidence levels of key points.
+		class_df (pandas.DataFrame): 	DataFrame containing class information.
+
+	Returns:
+		Tuple of integers: Coordinates of the identified body centroid.
+	"""
 	count_coor = 0
 	centroid_x = x_axis / 2  # default if centroid cannot be identified
 	centroid_y = y_axis / 2  # default if centroid cannot be identified
@@ -571,7 +882,7 @@ def identify_body_centroid(cor_x, cor_y, cor_conf, class_df):
 			centroid_y = int(cor_y.iloc[0, 1])
 			count_coor += 1
 
-		# midhip is not detected
+		# mid-hip is not detected
 		if not cor_conf.iloc[0, 8] > 0.0:
 			if cor_conf.iloc[0, 9] > 0.0:  # RHip
 				centroid_x += int(cor_x.iloc[0, 9])
@@ -612,12 +923,12 @@ def identify_body_centroid(cor_x, cor_y, cor_conf, class_df):
 
 
 if __name__ == "__main__":
-
-	data_types = list(["0_Baseline", "1_JointColour", "2_RadialGradient", "3_RadialSegment", "4_RingGradient", "5_RingSegment"])
-
 	# read arguments from config file
 	config = configparser.ConfigParser()
-	config.read('config.ini')
+	config.read('parameters.conf')
+
+	# names of each dataset (0_Baseline, 1_JointColour, 2_RadialGradient, etc.)
+	data_types = list(config.get('Global', 'data_types').split(', '))
 
 	# dimensions of input video frame (the image will be resized to this specification)
 	x_axis = int(config.get('DataGen', 'x_axis'))
@@ -678,7 +989,7 @@ if __name__ == "__main__":
 		keypoint_input_csv = os.path.join(keypoints_dir, "Keypoints_" + data_partition + ".csv")
 		df_orig = pd.read_csv(keypoint_input_csv)
 		df_orig['Filename'] = df_orig['Filename'].str.replace('_keypoints.json', '')  # remove unwanted part of filename
-		stats_file.write("DATA PARTITION: " + data_partition + "\n")
+		stats_file.write("DATA PARTITION: \t" + data_partition + "\n")
 		print_stats(df_orig, stats_file)
 
 		# get the set numbers of the dataset e.g. Training_{1172} : pertains to a specific participant and room
