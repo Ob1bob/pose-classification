@@ -156,27 +156,27 @@ def get_diamond_coordinates(x, y, d):
 		shift += 1
 
 		# right
-		if 0 < x + i < opt.x_axis:
+		if 0 < x + i < x_axis:
 			arr_out.append((x + i, y))
 			# up
 			for j in range(x, x + i):
-				if 0 < y + shift < opt.y_axis:
+				if 0 < y + shift < y_axis:
 					arr_out.append((j, y + shift))
 			# down
 			for j in range(x, x + i):
-				if 0 < y + shift < opt.y_axis:
+				if 0 < y + shift < y_axis:
 					arr_out.append((j, y - shift))
 
 		# left
-		if 0 < x - i < opt.x_axis:
+		if 0 < x - i < x_axis:
 			arr_out.append((x - i, y))
 			# up
 			for j in range(x, x - i, -1):
-				if 0 < y + shift < opt.y_axis:
+				if 0 < y + shift < y_axis:
 					arr_out.append((j, y + shift))
 			# down
 			for j in range(x, x - i, -1):
-				if 0 < y - shift < opt.y_axis:
+				if 0 < y - shift < y_axis:
 					arr_out.append((j, y - shift))
 
 	# removes any duplicate by converting list to a set and then back to list
@@ -206,19 +206,19 @@ def get_crosshair_coordinates(x, y, d):
 		stride += 1
 
 		# right
-		if 0 < x + i < opt.x_axis:
+		if 0 < x + i < x_axis:
 			arr_out.append((x + i, y))
 
 		# left
-		if 0 < x - i < opt.x_axis:
+		if 0 < x - i < x_axis:
 			arr_out.append((x - i, y))
 
 		# up
-		if 0 < y + i < opt.y_axis:
+		if 0 < y + i < y_axis:
 			arr_out.append((j, y + i))
 
 		# down
-		if 0 < y + i < opt.y_axis:
+		if 0 < y + i < y_axis:
 			arr_out.append((j, y - i))
 
 	arr_out = list(set(arr_out))
@@ -294,22 +294,31 @@ def divide_data_by_class(df):
 
 
 if __name__ == "__main__":
-	opt = data_generate_options()
+	# read arguments from config file
+	config = configparser.ConfigParser()
+	config.read('parameters.conf')
+
+	input_file = os.path.abspath(config.get('DataGen', 'input_file'))
+	output_dir = os.path.abspath(config.get('DataGen', 'output_dir'))
+	x_axis = int(config.get('DataGen', 'x_axis'))
+	y_axis = int(config.get('DataGen', 'y_axis'))
+	create_samples_flag = config.getboolean('DataGen', 'create_samples_flag')
+	set_size = int(config.get('DataGen', 'set_size'))
 
 	# declare output directory paths
-	output_dir = os.path.join(opt.output, Path(opt.input).stem)  # filename of input file is used as image output dir
-	output_dir_samples = os.path.join(opt.output, Path(opt.input).stem, "image_samples")
+	output_dir = os.path.join(output_dir, Path(input_file).stem)  # filename of input file is used as image output dir
+	output_dir_samples = os.path.join(output_dir, Path(input_file).stem, "image_samples")
 	# create output directory paths
 	create_directory(output_dir)
 	create_directory(output_dir_samples)
 
 	# user feedback
-	print("Generating data set: " + Path(opt.input).stem)
+	print("Generating data set: " + Path(input_file).stem)
 	print("Data set output location: " + output_dir)
 
 	# create three separate 2D arrays complete with column names & normalise coordinates
-	print("Reading key point coordinates from: " + opt.input)
-	df_openpose = pd.read_csv(opt.input)  # import data from CSV file
+	print("Reading key point coordinates from: " + input_file)
+	df_openpose = pd.read_csv(input_file)  # import data from CSV file
 	df_openpose = df_openpose.sample(frac=1).reset_index(drop=True)  # shuffle the dataframe
 
 	# report the proportions of sample representation in the data set
@@ -319,7 +328,7 @@ if __name__ == "__main__":
 
 	# limit & balance the data set to allow equal representation of sit and stand samples
 	print("Re-balancing the data set according class distribution...")
-	df_balanced = balance_data_set(df_openpose, sit_indexes, stand_indexes, opt.limit)
+	df_balanced = balance_data_set(df_openpose, sit_indexes, stand_indexes, set_size)
 	# divide data again by class after re-balancing
 	sit_indexes, stand_indexes = divide_data_by_class(df_balanced)
 	print("Sit sample size:\t{}".format(len(sit_indexes)))
@@ -346,8 +355,8 @@ if __name__ == "__main__":
 	# adjust the x and y coordinates in relation to the height and width of the image size (pixels)
 	highest_x = x_cor.values.max()  # can also specify highest value as 1.0 (openpose localisation output format)
 	highest_y = y_cor.values.max()  # can also specify highest value as 1.0 (openpose localisation output format)
-	x_cor = ((x_cor - 0) / (highest_x - 0) * (opt.x_axis - 1)).round(0)
-	y_cor = ((y_cor - 0) / (highest_y - 0) * (opt.y_axis - 1)).round(0)
+	x_cor = ((x_cor - 0) / (highest_x - 0) * (x_axis - 1)).round(0)
+	y_cor = ((y_cor - 0) / (highest_y - 0) * (y_axis - 1)).round(0)
 
 	# create RGB colours
 	spacedRGB = []
@@ -371,7 +380,7 @@ if __name__ == "__main__":
 		create_directory(sample_subdir)
 
 		for row in range(x_cor.shape[0]):
-			image = np.full((opt.x_axis, opt.y_axis, 3), 0)  # 3D array with black BG: 255 (white) / 0 (black)
+			image = np.full((x_axis, y_axis, 3), 0)  # 3D array with black BG: 255 (white) / 0 (black)
 
 			for col in range(x_cor.shape[1]):
 				x = int(x_cor.iloc[row, col])
@@ -398,7 +407,7 @@ if __name__ == "__main__":
 							image[y, x] = mix_two_rgb(r, g, b, r0, g0, b0)
 
 			# Use PIL to create an image from the array of pixels
-			if opt.create_samples and row < max_samples:
+			if create_samples_flag and row < max_samples:
 				array = np.array(image, dtype=np.uint8)
 				new_image = Image.fromarray(array)
 				new_image.save(os.path.join(sample_subdir, str(cl.values[row][0]) + "_" + df_balanced.iloc[row, 0]))  # filename

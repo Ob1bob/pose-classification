@@ -53,11 +53,20 @@ def get_session(gpu_fraction=0.333):
 
 
 if __name__ == "__main__":
-    opt = exploration_options()
+    # read arguments from config file
+    config = configparser.ConfigParser()
+    config.read('parameters.conf')
 
-    # Sub-directories for models and logs
-    MODEL_DIR = os.path.join(opt.log_dir, opt.dataset_name, "models")
-    LOG_DIR = os.path.join(opt.log_dir, opt.dataset_name, "logs")
+    dataset_dir = os.path.abspath(config.get('CNNExploration', 'dataset_dir'))
+    batch_size = int(config.get('CNNExploration', 'batch_size'))
+    epochs = int(config.get('CNNExploration', 'epochs'))
+    log_dir = os.path.join(config.get('CNNExploration', 'log_dir'))
+    # architecture exploratory experimentation was conducted using baseline and cross_conf_blended data sets
+    dataset_name = os.path.abspath(config.get('DataGen', 'input_file'))
+
+    # sub-directories for models and logs
+    MODEL_DIR = os.path.join(log_dir, dataset_name, "models")
+    LOG_DIR = os.path.join(log_dir, dataset_name, "logs")
     # create sub-directories
     create_directory(MODEL_DIR)
     create_directory(LOG_DIR)
@@ -65,8 +74,8 @@ if __name__ == "__main__":
     # set keras tensorflow session to use fraction of GPU
     ktf.set_session(get_session())
 
-    csv_train_file = os.path.join(opt.data_dir, opt.dataset_name + "-TRAIN.csv")
-    csv_test_file = os.path.join(opt.data_dir, opt.dataset_name + "-TEST.csv")
+    csv_train_file = os.path.join(input_data_dir, dataset_name + "-TRAIN.csv")
+    csv_test_file = os.path.join(input_data_dir, dataset_name + "-TEST.csv")
     # import data from CSV file
     df_train = pd.read_csv(csv_train_file)
     df_test = pd.read_csv(csv_test_file)
@@ -114,8 +123,8 @@ if __name__ == "__main__":
     # create generator (1.0/255.0 = 0.003921568627451)
     datagen = ImageDataGenerator(rescale=1.0/255.0)  # normalise
     # prepare an iterators to scale images
-    train_iterator = datagen.flow(x_train, y_train, batch_size=opt.batch_size)
-    test_iterator = datagen.flow(x_test, y_test, batch_size=opt.batch_size)
+    train_iterator = datagen.flow(x_train, y_train, batch_size=batch_size)
+    test_iterator = datagen.flow(x_test, y_test, batch_size=batch_size)
     # confirm data rescaling with user feedback
     batchX, batchy = train_iterator.next()
     print('Batch shape=%s, min=%.3f, max=%.3f' % (batchX.shape, batchX.min(), batchX.max()))
@@ -167,9 +176,9 @@ if __name__ == "__main__":
 
                 # commence training
                 model.fit_generator(train_iterator,
-                          #batch_size=opt.batch_size,
-                          steps_per_epoch=round(x_train.shape[0] / opt.batch_size),
-                          epochs=opt.epochs,
+                          #batch_size=batch_size,
+                          steps_per_epoch=round(x_train.shape[0] / batch_size),
+                          epochs=epochs,
                           #validation_split=0.3,
                           validation_data=(x_test, y_test),
                           shuffle=True,
