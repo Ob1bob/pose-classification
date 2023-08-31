@@ -44,7 +44,7 @@ def plot_confusion_matrix(model_name, cm, classes, normalize=False, title='Confu
         classes (list):             List of class labels for labeling the axes.
         normalize (bool, optional): Whether to normalize confusion matrix values (default is False).
         title (str, optional):      Title for the plot (default is 'Confusion matrix').
-        cmap (matplotlib.colors.Colormap, optional): Color map for the plot (default is plt.cm.Blues).
+        cmap (matplotlib.colors.Colormap, optional): colour map for the plot (default is plt.cm.Blues).
     """
     image_name = model_name
     if normalize:
@@ -247,7 +247,7 @@ def compile_model(batch_size, image_size, model_name, train_dir, valid_dir):
                                   steps_per_epoch=len(train_it),
                                   validation_data=valid_it,
                                   validation_steps=len(valid_it),
-                                  epochs=2,  #! 30
+                                  epochs=epochs,
                                   callbacks=[tensorboard, earlystop, learning_rate_reduction],
                                   verbose=1,
                                   class_weight=class_weights)
@@ -376,6 +376,12 @@ if __name__ == "__main__":
     generated_dir = os.path.abspath(config.get('CNN', 'generated_dir'))
     dataset_dir = os.path.join(generated_dir, dataset_name)  # e.g. 3_generated-data/156x108/0_Baseline
     results_dir = os.path.abspath(config.get('CNN', 'results_dir'))
+    epochs = config.get('CNN', 'epochs')
+    batch_size = config.get('CNN', 'batch_size')
+    # the cropped dimensions of generated video frames
+    x_crop = int(config.get('Global', 'x_crop'))
+    y_crop = int(config.get('Global', 'y_crop'))
+
     tmp_fold_dir = os.path.join(results_dir, "tmp")  # ten-fold datasets are copied into tmp directories during training
     models_dir = os.path.join(results_dir, "models")
     logs_dir = os.path.join(results_dir, "logs")
@@ -415,7 +421,7 @@ if __name__ == "__main__":
         validation = pd.concat([x_test, y_test], axis=1)
 
         # feedback on training and validation set sample sizes
-        print("\n>>> TRAINING FOLD [{}/{}]\n".format(str(i), str(skf.n_splits)))
+        print("\n>>> TRAINING FOLD [{}/{}]\n".format(str(i+1), str(skf.n_splits)))
         print("\t{:<20}: \t{}".format("TRAIN SET SAMPLE SIZE", str(train['class'].value_counts().sum())))
         print("\t{}\n".format(str(train['class'].value_counts()).replace('\n', '\n\t')))
         print("\t{:<20}: \t{}".format("VALIDATION SET SAMPLE SIZE", str(validation['class'].value_counts().sum())))
@@ -432,14 +438,14 @@ if __name__ == "__main__":
         model_name = "{}-Fold_{}.h5".format(dataset_name, int(i))
 
         # create and train the model - returns the validation accuracy and validation loss
-        model, val_loss, val_accuracy = compile_model(batch_size=64, image_size=(108, 156), model_name=model_name, train_dir=train_dir, valid_dir=valid_dir)
+        model, val_loss, val_accuracy = compile_model(batch_size=batch_size, image_size=(y_crop, x_crop), model_name=model_name, train_dir=train_dir, valid_dir=valid_dir)
         # store validation accuracy and loss - to be used to calculate average over all 10 folds
         total_val_accuracy.append(val_accuracy)
         total_val_loss.append(val_loss)
 
         # the predict() method executes the model to guess the class of images in the test set directory
         # this function returns the actual classes and the predicted classes in the same order
-        classes, predicted, actual = predict(model=model, batch_size=64, image_size=(108, 156), test_dir=test_dir)
+        classes, predicted, actual = predict(model=model, batch_size=epochs, image_size=(y_crop, x_crop), test_dir=test_dir)
 
         # append accuracy from the predictions on the test data
         total_test_accuracy.append(accuracy_score(actual, predicted))
@@ -456,7 +462,7 @@ if __name__ == "__main__":
     test_results.write("avg loss:\t{}\n".format(np.mean(total_val_loss)))
     test_results.write("\tfor each fold:\n")
     for i, val in enumerate(total_val_accuracy):
-        test_results.write("\t\t[{}]\t{}\n".format(i, val))
+        test_results.write("\t\t[{}]\t{}\n".format(i+1, val))
     # test data partition
     test_results.write("\nTEST ACCURACY:\t{:.2f}%\n".format(np.mean(total_test_accuracy)*100))
     test_results.write("\tfor each fold:\n")
@@ -521,5 +527,9 @@ if __name__ == "__main__":
     test_results.write("TN:\n{}\n".format(other_metrics[9]))
     test_results.write("FP:\n{}\n".format(other_metrics[10]))
     test_results.write("FN:\n{}\n".format(other_metrics[11]))
+
+    # remove the temp directory
+    if os.path.exists(destination_directory):
+        shutil.rmtree(destination_directory)
 
     gc.collect()

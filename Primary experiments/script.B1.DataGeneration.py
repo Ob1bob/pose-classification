@@ -53,7 +53,7 @@ def create_directories(paths):
 
 def filter_greyscale(image):
 	"""
-	This function takes an image in the BGR color space (used by OpenCV) and converts
+	This function takes an image in the BGR colour space (used by OpenCV) and converts
 	it to greyscale using the cv2.COLOR_BGR2GREY conversion.
 
 	Args:
@@ -336,17 +336,17 @@ def mix_two_rgb(r1, g1, b1, r2, g2, b2):
 
 def get_radial_gradient(x, y, cx, cy):
 	"""
-	Calculates a radial color gradient by mapping the position (x, y) relative to a center
-	point (cx, cy) to an HSV hue value. The hue value is then converted to an RGB color.
+	Calculates a radial colour gradient by mapping the position (x, y) relative to a center
+	point (cx, cy) to an HSV hue value. The hue value is then converted to an RGB colour.
 
 	Args:
-		x (int): 	The x-coordinate of the point for which the radial gradient color is generated.
-		y (int): 	The y-coordinate of the point for which the radial gradient color is generated.
+		x (int): 	The x-coordinate of the point for which the radial gradient colour is generated.
+		y (int): 	The y-coordinate of the point for which the radial gradient colour is generated.
 		cx (int): 	The x-coordinate of the center point of the radial gradient.
 		cy (int): 	The y-coordinate of the center point of the radial gradient.
 
 	Returns:
-		tuple: An RGB tuple representing the color gradient at the given point.
+		tuple: An RGB tuple representing the colour gradient at the given point.
 	"""
 	rx = x - cx
 	ry = y - cy
@@ -357,17 +357,17 @@ def get_radial_gradient(x, y, cx, cy):
 
 def get_radial_segment(x, y, cx, cy):
 	"""
-	Calculates a radial color segment by mapping the position (x, y) relative to a center
-	point (cx, cy) to an HSV hue value. The hue value is then converted to an RGB color.
+	Calculates a radial colour segment by mapping the position (x, y) relative to a center
+	point (cx, cy) to an HSV hue value. The hue value is then converted to an RGB colour.
 
 	Args:
-		x (int): 	The x-coordinate of the point for which the radial segment color is generated.
-		y (int): 	The y-coordinate of the point for which the radial segment color is generated.
+		x (int): 	The x-coordinate of the point for which the radial segment colour is generated.
+		y (int): 	The y-coordinate of the point for which the radial segment colour is generated.
 		cx (int): 	The x-coordinate of the center point of the radial segment.
 		cy (int): 	The y-coordinate of the center point of the radial segment.
 
 	Returns:
-		tuple: An RGB tuple representing the color segment at the given point.
+		tuple: An RGB tuple representing the colour segment at the given point.
 	"""
 	rx = x - cx
 	ry = y - cy
@@ -389,8 +389,8 @@ def get_ring_gradient(x, y, cx, cy):
 	and	the center point (cx, cy) to an HSV hue value. The hue value is then converted to an RGB colour.
 
 	Args:
-		x (int): 	The x-coordinate of the point for which the ring gradient color is generated.
-		y (int): 	The y-coordinate of the point for which the ring gradient color is generated.
+		x (int): 	The x-coordinate of the point for which the ring gradient colour is generated.
+		y (int): 	The y-coordinate of the point for which the ring gradient colour is generated.
 		cx (int): 	The x-coordinate of the center point of the ring gradient.
 		cy (int): 	The y-coordinate of the center point of the ring gradient.
 
@@ -408,17 +408,17 @@ def get_ring_gradient(x, y, cx, cy):
 
 def get_ring_segment(x, y, cx, cy):
 	"""
-	Calculates a ringed and segmented circular color gradient by mapping the distance between the position (x, y)
+	Calculates a ringed and segmented circular colour gradient by mapping the distance between the position (x, y)
 	and	the center point (cx, cy) to an HSV hue value. The hue value is then converted to an RGB colour.
 
 	Args:
-		x (int): 	The x-coordinate of the point for which the ring segment color is generated.
-		y (int): 	The y-coordinate of the point for which the ring segment color is generated.
+		x (int): 	The x-coordinate of the point for which the ring segment colour is generated.
+		y (int): 	The y-coordinate of the point for which the ring segment colour is generated.
 		cx (int): 	The x-coordinate of the center point of the ring segment.
 		cy (int): 	The y-coordinate of the center point of the ring segment.
 
 	Returns:
-		tuple: An RGB tuple representing the color of the circular segment at the given point.
+		tuple: An RGB tuple representing the colour of the circular segment at the given point.
 	"""
 	radius = min(x_axis, y_axis) / 2
 	cx = cx - 0.5
@@ -449,16 +449,16 @@ def get_ring_segment(x, y, cx, cy):
 
 def generate_colour_plot(plot_type, centroid):
 	"""
-	Generates a color plot based on the specified plot type and the centroid position. The color plot
-	is created by mapping colors to each pixel in the image based on its location relative to the centroid.
+	Generates a colour plot based on the specified plot type and the centroid position. The colour plot
+	is created by mapping colours to each pixel in the image based on its location relative to the centroid.
 
 	Args:
-		plot_type (str): 	The type of color plot to generate.
+		plot_type (str): 	The type of colour plot to generate.
 							Valid options are 'radial_gradient', 'radial_segment', 'ring_gradient', and 'ring_segment'
 		centroid (tuple): 	A tuple containing the x and y coordinates of the centroid point.
 
 	Returns:
-		numpy.ndarray: A NumPy array representing the generated color plot image.
+		numpy.ndarray: A NumPy array representing the generated colour plot image.
 	"""
 	im = np.full((y_axis, x_axis, 3), BG_colour)
 	cx, cy = centroid
@@ -489,16 +489,16 @@ def generate_augmentation_illustrations(dir):
 	Generates an image of each type of augmentation colour plot to illustrate their layout.
 
 	Args:
-		plot_type (str): 	The type of color plot to generate.
+		plot_type (str): 	The type of colour plot to generate.
 							Valid options are 'radial_gradient', 'radial_segment', 'ring_gradient', and 'ring_segment'
 		centroid (tuple): A tuple containing the x and y coordinates of the centroid point.
 
 	Returns:
-		numpy.ndarray: A NumPy array representing the generated color plot image.
+		numpy.ndarray: A NumPy array representing the generated colour plot image.
 	"""
 	for plot_type in data_types[2:]:
 		cx, cy = x_axis / 2, y_axis / 2
-		bg_im = generate_color_plot(plot_type, (cx, cy))
+		bg_im = generate_colour_plot(plot_type, (cx, cy))
 		Image.fromarray(bg_im).save(f"{dir}/{plot_type}.png")
 
 
@@ -632,14 +632,14 @@ def get_coordinates_shape(x, y, d=2):
 
 def plot_rgb_coordinates(image, coordinates, colour):
 	"""
-	This function takes an input image, a list of (x, y) coordinates, and an RGB color value.
-	It modifies the image by either setting the RGB color at the specified coordinates to the provided
-	color or blending it with the existing color if a color is already present at those coordinates.
+	This function takes an input image, a list of (x, y) coordinates, and an RGB colour value.
+	It modifies the image by either setting the RGB colour at the specified coordinates to the provided
+	colour or blending it with the existing colour if a colour is already present at those coordinates.
 
 	Args:
 		image (numpy.ndarray): 	A 3D array representing the RGB pixel values of the image.
 		coordinates (list): 	A list of (x, y) coordinates to modify.
-		colour (tuple): 		An RGB color value (r, g, b) to set or blend.
+		colour (tuple): 		An RGB colour value (r, g, b) to set or blend.
 
 	Returns:
 		numpy.ndarray: The modified image.
@@ -679,7 +679,7 @@ def plot_monochrome_coordinates(image, coordinates, mono_shade):
 
 def overlay_mask_on_image(fg, mask):
 	"""
-	This function takes a foreground image and a mask of key points (possibly with color channels)
+	This function takes a foreground image and a mask of key points (possibly with colour channels)
 	and overlays the mask onto the foreground image at corresponding pixel coordinates. It modifies
 	the foreground image by replacing pixels with key points from the mask.
 	
@@ -790,7 +790,7 @@ def generate_representation(df, centroid_coor, fg_rgb, fg_depth, datatype):
 	# cutout images for colour wheels
 	cutout_im = None
 	if datatype in list([2, 3, 4, 5]):
-		cutout_im = generate_color_plot(data_types[datatype], centroid_coor)
+		cutout_im = generate_colour_plot(data_types[datatype], centroid_coor)
 
 	# for every coordinate in the set (thus every column)
 	if cl.iloc[0, 0] != 6:  # images without any person in the frame - no joints to map
@@ -934,8 +934,8 @@ if __name__ == "__main__":
 	x_axis = int(config.get('DataGen', 'x_axis'))
 	y_axis = int(config.get('DataGen', 'y_axis'))
 	# crop generated output video frame to this dimension
-	x_crop = int(config.get('DataGen', 'x_crop'))
-	y_crop = int(config.get('DataGen', 'y_crop'))
+	x_crop = int(config.get('Global', 'x_crop'))
+	y_crop = int(config.get('Global', 'y_crop'))
 	# 0: black; 255: white
 	BG_colour = int(config.get('DataGen', 'BG_colour'))
 	# individual images (video frames)

@@ -8,6 +8,7 @@ from pathlib import Path
 from PIL import Image
 from matplotlib import pyplot
 from options import data_generate_options
+import configparser
 
 
 def create_directory(path):
@@ -57,7 +58,7 @@ def hex_to_rgb(hex):
 
 def calculate_lightness(lightness, r, g, b):
 	"""
-	Apply a tint transformation to an RGB color.
+	Apply a tint transformation to an RGB colour.
 
 	Args:
 		lightness (float): 	tint parameter (e.g., between 0 and 1).
@@ -66,7 +67,7 @@ def calculate_lightness(lightness, r, g, b):
 		b (int): 			Blue channel value (0-255).
 
 	Returns:
-		tuple: Transformed RGB color tuple.
+		tuple: Transformed RGB colour tuple.
 	"""
 	lightness = (lightness - 1)  # reverse confidence
 	lightness = ((lightness - 0) / (0.1 - 0)) * (0.02 - 0.1) + 0  # normalise
@@ -76,8 +77,8 @@ def calculate_lightness(lightness, r, g, b):
 	tmp_g = (255 - g) * lightness + g
 	tmp_b = (255 - b) * lightness + b
 
-	# If a temporary value exceeds 255 (maximum value for an RGB color channel),
-	# it is reverted back to the original color channel value to prevent color distortion.
+	# If a temporary value exceeds 255 (maximum value for an RGB colour channel),
+	# it is reverted back to the original colour channel value to prevent colour distortion.
 	if tmp_r > 255:
 		tmp_r = r
 	if tmp_b > 255:
@@ -90,25 +91,25 @@ def calculate_lightness(lightness, r, g, b):
 
 def mix_two_rgb(r1, g1, b1, r2, g2, b2):
 	"""
-	Calculate the average of two RGB colors.
+	Calculate the average of two RGB colours.
 
 	Args:
-		r1 (int): 	Red channel value of color 1 (0-255).
-		g1 (int): 	Green channel value of color 1 (0-255).
-		b1 (int): 	Blue channel value of color 1 (0-255).
-		r2 (int): 	Red channel value of color 2 (0-255).
-		g2 (int): 	Green channel value of color 2 (0-255).
-		b2 (int): 	Blue channel value of color 2 (0-255).
+		r1 (int): 	Red channel value of colour 1 (0-255).
+		g1 (int): 	Green channel value of colour 1 (0-255).
+		b1 (int): 	Blue channel value of colour 1 (0-255).
+		r2 (int): 	Red channel value of colour 2 (0-255).
+		g2 (int): 	Green channel value of colour 2 (0-255).
+		b2 (int): 	Blue channel value of colour 2 (0-255).
 
 	Returns:
-		tuple: Average RGB color tuple.
+		tuple: Average RGB colour tuple.
 	"""
 	tmp_r = (r1 * 0.5) + (r2 * 0.5)
 	tmp_g = (g1 * 0.5) + (g2 * 0.5)
 	tmp_b = (b1 * 0.5) + (b2 * 0.5)
 
-	# If a temporary value exceeds 255 (maximum value for an RGB color channel),
-	# it is reverted back to the original color channel value to prevent color distortion.
+	# If a temporary value exceeds 255 (maximum value for an RGB colour channel),
+	# it is reverted back to the original colour channel value to prevent colour distortion.
 	if tmp_r > 255:
 		tmp_r = r
 	if tmp_b > 255:
@@ -299,36 +300,37 @@ if __name__ == "__main__":
 	config.read('parameters.conf')
 
 	input_file = os.path.abspath(config.get('DataGen', 'input_file'))
-	output_dir = os.path.abspath(config.get('DataGen', 'output_dir'))
+	dataset_dir = os.path.abspath(config.get('Global', 'dataset_dir'))
 	x_axis = int(config.get('DataGen', 'x_axis'))
 	y_axis = int(config.get('DataGen', 'y_axis'))
-	create_samples_flag = config.getboolean('DataGen', 'create_samples_flag')
-	set_size = int(config.get('DataGen', 'set_size'))
+	max_sample_images = int(config.get('DataGen', 'max_sample_images'))
+	max_sample_dataset = int(config.get('DataGen', 'max_sample_dataset'))
 
 	# declare output directory paths
-	output_dir = os.path.join(output_dir, Path(input_file).stem)  # filename of input file is used as image output dir
-	output_dir_samples = os.path.join(output_dir, Path(input_file).stem, "image_samples")
+	output_dir = os.path.join(dataset_dir, Path(input_file).stem)  # filename of input file is used as image output dir
+	output_dir_samples = os.path.join(output_dir, "image_samples")
 	# create output directory paths
 	create_directory(output_dir)
 	create_directory(output_dir_samples)
 
 	# user feedback
-	print("Generating data set: " + Path(input_file).stem)
-	print("Data set output location: " + output_dir)
+	print("Generating data set: \n\t" + Path(input_file).stem)
+	print("Data set output location: \n\t" + output_dir)
 
 	# create three separate 2D arrays complete with column names & normalise coordinates
-	print("Reading key point coordinates from: " + input_file)
+	print("Reading key point coordinates from: \n\t" + input_file)
 	df_openpose = pd.read_csv(input_file)  # import data from CSV file
 	df_openpose = df_openpose.sample(frac=1).reset_index(drop=True)  # shuffle the dataframe
 
 	# report the proportions of sample representation in the data set
+	print("\nClass distribution:")
 	sit_indexes, stand_indexes = divide_data_by_class(df_openpose)
 	print("Sit sample size:\t{}".format(len(sit_indexes)))
 	print("Stand sample size:\t{}".format(len(stand_indexes)))
 
 	# limit & balance the data set to allow equal representation of sit and stand samples
-	print("Re-balancing the data set according class distribution...")
-	df_balanced = balance_data_set(df_openpose, sit_indexes, stand_indexes, set_size)
+	print("Re-balancing the data set according to class distribution...")
+	df_balanced = balance_data_set(df_openpose, sit_indexes, stand_indexes, max_sample_dataset)
 	# divide data again by class after re-balancing
 	sit_indexes, stand_indexes = divide_data_by_class(df_balanced)
 	print("Sit sample size:\t{}".format(len(sit_indexes)))
@@ -355,8 +357,10 @@ if __name__ == "__main__":
 	# adjust the x and y coordinates in relation to the height and width of the image size (pixels)
 	highest_x = x_cor.values.max()  # can also specify highest value as 1.0 (openpose localisation output format)
 	highest_y = y_cor.values.max()  # can also specify highest value as 1.0 (openpose localisation output format)
-	x_cor = ((x_cor - 0) / (highest_x - 0) * (x_axis - 1)).round(0)
-	y_cor = ((y_cor - 0) / (highest_y - 0) * (y_axis - 1)).round(0)
+	#x_cor = ((x_cor - 0) / (highest_x - 0) * (x_axis - 1)).round(0)
+	#y_cor = ((y_cor - 0) / (highest_y - 0) * (y_axis - 1)).round(0)
+	x_cor = ((x_cor - 0) / (1 - 0) * (x_axis - 1)).round(0)
+	y_cor = ((y_cor - 0) / (1 - 0) * (y_axis - 1)).round(0)
 
 	# create RGB colours
 	spacedRGB = []
@@ -375,12 +379,11 @@ if __name__ == "__main__":
 		print("Generating image set:\t " + key)
 
 		img_set = []
-		max_samples = 50  # limit the number of samples to generate
 		sample_subdir = os.path.join(output_dir_samples, key)
 		create_directory(sample_subdir)
 
 		for row in range(x_cor.shape[0]):
-			image = np.full((x_axis, y_axis, 3), 0)  # 3D array with black BG: 255 (white) / 0 (black)
+			image = np.full((y_axis, x_axis, 3), 0)  # 3D array with black BG: 255 (white) / 0 (black)
 
 			for col in range(x_cor.shape[1]):
 				x = int(x_cor.iloc[row, col])
@@ -407,7 +410,7 @@ if __name__ == "__main__":
 							image[y, x] = mix_two_rgb(r, g, b, r0, g0, b0)
 
 			# Use PIL to create an image from the array of pixels
-			if create_samples_flag and row < max_samples:
+			if row < max_sample_images:
 				array = np.array(image, dtype=np.uint8)
 				new_image = Image.fromarray(array)
 				new_image.save(os.path.join(sample_subdir, str(cl.values[row][0]) + "_" + df_balanced.iloc[row, 0]))  # filename
@@ -432,8 +435,8 @@ if __name__ == "__main__":
 					stand_index.append(index)
 				else:
 					sit_index.append(index)
-			print("{} data set size:\n"
-						 "\tSit samples:\t{}\n\tStand samples:\t{}".format(key, len(sit_index), len(stand_index)))
+			print("[{}] data set size: {}\n"
+						 "\tSit samples:\t{}\n\tStand samples:\t{}".format(key, (len(sit_index) + len(stand_index)), len(sit_index), len(stand_index)))
 
 			# identify the index at which data is to be split between train and test sets
 			split_anchor_idx = round(len(sit_index) * 0.8)  # 0.8 = 80% train; 20% test
@@ -463,7 +466,7 @@ if __name__ == "__main__":
 			pd.DataFrame(train_set).to_csv(csv_out_train, index=False)
 			pd.DataFrame(test_set).to_csv(csv_out_test, index=False)
 
-			print("{} data set size: {}\n"
+			print("[{}] data set size: {}\n"
 				  "\tTrain set:\t{}\n\tTest set:\t{}\n".
 				  format(key, len(train_set) + len(test_set), len(train_set), len(test_set)))
 

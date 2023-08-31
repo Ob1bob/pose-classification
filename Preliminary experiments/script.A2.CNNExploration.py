@@ -11,6 +11,7 @@ from keras.preprocessing.image import ImageDataGenerator
 import tensorflow as tf
 import keras.backend.tensorflow_backend as ktf
 from options import exploration_options
+import configparser
 
 
 def plot_image(img):
@@ -57,25 +58,23 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read('parameters.conf')
 
-    dataset_dir = os.path.abspath(config.get('CNNExploration', 'dataset_dir'))
+    # architecture exploratory experimentation was conducted using baseline and cross_conf_blended data sets
+    dataset_name = config.get('CNNExploration', 'dataset_name')
+    dataset_augmentation = config.get('CNNExploration', 'dataset_augmentation')
+    dataset_dir = os.path.join(os.path.abspath(config.get('Global', 'dataset_dir')), dataset_name)
+    log_dir = os.path.join(os.path.abspath(config.get('CNNExploration', 'log_dir')), dataset_name)
     batch_size = int(config.get('CNNExploration', 'batch_size'))
     epochs = int(config.get('CNNExploration', 'epochs'))
-    log_dir = os.path.join(config.get('CNNExploration', 'log_dir'))
-    # architecture exploratory experimentation was conducted using baseline and cross_conf_blended data sets
-    dataset_name = os.path.abspath(config.get('DataGen', 'input_file'))
 
     # sub-directories for models and logs
-    MODEL_DIR = os.path.join(log_dir, dataset_name, "models")
-    LOG_DIR = os.path.join(log_dir, dataset_name, "logs")
+    MODELS_DIR = os.path.join(log_dir, "models")
+    LOGS_DIR = os.path.join(log_dir, "logs")
     # create sub-directories
-    create_directory(MODEL_DIR)
-    create_directory(LOG_DIR)
+    create_directory(MODELS_DIR)
+    create_directory(LOGS_DIR)
 
-    # set keras tensorflow session to use fraction of GPU
-    ktf.set_session(get_session())
-
-    csv_train_file = os.path.join(input_data_dir, dataset_name + "-TRAIN.csv")
-    csv_test_file = os.path.join(input_data_dir, dataset_name + "-TEST.csv")
+    csv_train_file = os.path.join(dataset_dir, dataset_augmentation + "-TRAIN.csv")
+    csv_test_file = os.path.join(dataset_dir, dataset_augmentation + "-TEST.csv")
     # import data from CSV file
     df_train = pd.read_csv(csv_train_file)
     df_test = pd.read_csv(csv_test_file)
@@ -109,6 +108,7 @@ if __name__ == "__main__":
     # User feedback on data stats
     print('x_train shape:', x_train.shape)
     print(x_train.shape[0], 'train samples')
+    print('x_test shape:', x_test.shape)
     print(x_test.shape[0], 'test samples')
 
     # debug
@@ -119,6 +119,8 @@ if __name__ == "__main__":
     x_test = x_test.astype('float32')
 
     # TRAINING #
+    # set keras tensorflow session to use fraction of GPU
+    ktf.set_session(get_session())
     # Data pre-processing
     # create generator (1.0/255.0 = 0.003921568627451)
     datagen = ImageDataGenerator(rescale=1.0/255.0)  # normalise
@@ -140,7 +142,7 @@ if __name__ == "__main__":
 
                 # label model based on layer configuration
                 MODEL_NAME = "{}-conv-{}-nodes-{}-dense-{}".format(conv_layer, layer_size, dense_layer, int(time.time()))
-                print(MODEL_NAME)
+                print("\n" + MODEL_NAME)
 
                 # compile CNN architecture
                 model = Sequential()
@@ -167,7 +169,7 @@ if __name__ == "__main__":
                 model.add(Dense(1))
                 model.add(Activation('sigmoid'))
 
-                tensorboard = TensorBoard(log_dir=LOG_DIR + "/{}".format(MODEL_NAME))
+                tensorboard = TensorBoard(log_dir=LOGS_DIR + "/{}".format(MODEL_NAME))
 
                 model.compile(loss='binary_crossentropy', # loss='categorical_crossentropy' assuming more than 2 classes
                               optimizer='adam',  # adam optimiser
@@ -175,18 +177,18 @@ if __name__ == "__main__":
                               )
 
                 # commence training
+                # test data is purposely used as the validation set (preliminary experiments were intended to only
+                # indicate the potential promise of the augmentation-based approach and not fully evaluate it
                 model.fit_generator(train_iterator,
-                          #batch_size=batch_size,
                           steps_per_epoch=round(x_train.shape[0] / batch_size),
                           epochs=epochs,
-                          #validation_split=0.3,
                           validation_data=(x_test, y_test),
                           shuffle=True,
                           callbacks=[tensorboard]
                           )
 
                 # Save model and weights
-                model_path = os.path.join(MODEL_DIR, MODEL_NAME)
+                model_path = os.path.join(MODELS_DIR, MODEL_NAME)
                 model.save(model_path)
                 print('Saved trained model at %s ' % model_path)
 
