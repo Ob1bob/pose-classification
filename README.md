@@ -6,6 +6,21 @@
 💽 [Link to Dayta NWU Repositroy](https://dayta.nwu.ac.za/authors/JACO_DU_TOIT/15458408 "NWU Dayta Repository")
 
 ---
+## Set-up
+
+Ensure that the following prerequisites are installed:
+- [NVIDIA GPU with CUDA support](https://docs.nvidia.com/cuda/cuda-installation-guide-microsoft-windows/index.html "CUDA installation guide")
+- NVIDIA CUDA Toolkit
+- cuDNN library
+- [Python 3.7.3](https://www.python.org/downloads/release/python-373/ "Python 3.7.3")
+- [Keras](https://saturncloud.io/blog/how-to-install-keras-with-gpu-support/ "Keras installation guide")
+
+The relevant Python libraries and dependencies can be installed using the requirements.txt
+
+```bash
+pip install -r requirements.txt
+```
+---
 
 ## Preliminary experiments
 The first set of experiments act as a proof of concept to establish the viability of augmentating pose data with colour information to improve the capacity of a CNN to perform pose classification.
