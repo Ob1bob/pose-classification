@@ -6,6 +6,16 @@
 💽 [Link to Dayta NWU Repositroy](https://dayta.nwu.ac.za/authors/JACO_DU_TOIT/15458408 "NWU Dayta Repository")
 
 ---
+
+Published research related to this project:
+
+📘 **SATNAC 2019**
+[Heuristic Data Augmentation for Improved Human Activity Recognition](https://doi.org/10.25388/nwu.23284544 "SATNAC 2019 Research Paper")
+
+📘 **SATNAC 2021**
+[Colour-based encoding schemes for improved human pose recognition using a Convolutional neural network](https://doi.org/10.25388/nwu.23284388  "SATNAC 2021 Research Paper")
+
+---
 ## Set-up
 
 Ensure that the following prerequisites are installed:
