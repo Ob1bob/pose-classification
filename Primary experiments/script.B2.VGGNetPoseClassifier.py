@@ -379,8 +379,8 @@ if __name__ == "__main__":
     epochs = config.get('CNN', 'epochs')
     batch_size = config.get('CNN', 'batch_size')
     # the cropped dimensions of generated video frames
-    x_crop = int(config.get('Global', 'x_crop'))
-    y_crop = int(config.get('Global', 'y_crop'))
+    x_axis = int(config.get('CNN', 'x_axis'))
+    y_axis = int(config.get('CNN', 'y_axis'))
 
     tmp_fold_dir = os.path.join(results_dir, "tmp")  # ten-fold datasets are copied into tmp directories during training
     models_dir = os.path.join(results_dir, "models")
@@ -438,14 +438,14 @@ if __name__ == "__main__":
         model_name = "{}-Fold_{}.h5".format(dataset_name, int(i))
 
         # create and train the model - returns the validation accuracy and validation loss
-        model, val_loss, val_accuracy = compile_model(batch_size=batch_size, image_size=(y_crop, x_crop), model_name=model_name, train_dir=train_dir, valid_dir=valid_dir)
+        model, val_loss, val_accuracy = compile_model(batch_size=batch_size, image_size=(y_axis, x_axis), model_name=model_name, train_dir=train_dir, valid_dir=valid_dir)
         # store validation accuracy and loss - to be used to calculate average over all 10 folds
         total_val_accuracy.append(val_accuracy)
         total_val_loss.append(val_loss)
 
         # the predict() method executes the model to guess the class of images in the test set directory
         # this function returns the actual classes and the predicted classes in the same order
-        classes, predicted, actual = predict(model=model, batch_size=epochs, image_size=(y_crop, x_crop), test_dir=test_dir)
+        classes, predicted, actual = predict(model=model, batch_size=epochs, image_size=(y_axis, x_axis), test_dir=test_dir)
 
         # append accuracy from the predictions on the test data
         total_test_accuracy.append(accuracy_score(actual, predicted))

@@ -937,7 +937,7 @@ if __name__ == "__main__":
 	x_crop = int(config.get('Global', 'x_crop'))
 	y_crop = int(config.get('Global', 'y_crop'))
 	# 0: black; 255: white
-	BG_colour = int(config.get('DataGen', 'BG_colour'))
+	BG_colour = 0
 	# individual images (video frames)
 	video_frames_dir = os.path.abspath(config.get('DataGen', 'video_frames_dir'))
 	# CSV files of OpenPose key point predictions

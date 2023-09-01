@@ -7,7 +7,6 @@ import pandas as pd
 from pathlib import Path
 from PIL import Image
 from matplotlib import pyplot
-from options import data_generate_options
 import configparser
 
 

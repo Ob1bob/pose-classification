@@ -10,7 +10,6 @@ from keras.callbacks import TensorBoard
 from keras.preprocessing.image import ImageDataGenerator
 import tensorflow as tf
 import keras.backend.tensorflow_backend as ktf
-from options import training_options
 import configparser
 
 

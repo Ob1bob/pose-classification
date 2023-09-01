@@ -1,0 +1,15 @@
+name: TensorflowVE
+channels:
+  - defaults
+dependencies:
+  - python=3.6.1
+  - pillow
+  - opencv
+  - scikit-learn
+  - libopencv
+  - numpy
+  - h5py
+  - scikit-image
+  - seaborn
+prefix: C:\Users\JSdT\.conda\envs\TensorflowVE
+
