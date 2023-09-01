@@ -2,13 +2,54 @@
 The primary experiments build on the insights of the preliminary experiments regarding the influence of colour-focused augmentations. These experiments form the core of the study and entail the experimental augmentation of a video dataset designed for fall detection to demonstrate the feasibility of data augmentation in a real-time, pose-dependant application.
 
 ### <img src="https://user-images.githubusercontent.com/25181517/183423507-c056a6f9-1ba8-4312-a350-19bcbc5a8697.png" width="20" height="20" border="10"/> script.B1.DataGeneration.py
-A video dataset that contains five different poses (sitting, standing, laying, bending, crawling), is augmented in the data generation script by superimposing joint markers onto the human silhouette. The joint locations are derived from OpenPose and are supplemented with additional information through the use of colour. The keypoint colour augmentations are applied based on either a radial or ringed colour wheel, which is notionally intended to encode spatial information based on the position of the joint. Four image datasets are generated are generated, each providing varying degrees of supplemental information to encourage class similarity among related pose samples to promote accurate classification.
+
+<details>
+  <summary>script parameters and arguments</summary>
+
+_The following default arguments can be adapted in the parameters.conf file:_
+- <kbd>video_frames_dir</kbd> spath to where the still frames of the video dataset is located.
+- <kbd>keypoints_dir</kbd> is the path to a .csv file containing the OpenPose keypoint localisation predications.
+- <kbd>generated_dir</kbd> the output directory where the produced augmented image dataset is to be stored.
+- <kbd>x_axis</kbd> is the horizontal dimension for the original video frames.
+- <kbd>y_axis</kbd> is the vertical dimension for the original video frames.
+- <kbd>x_crop</kbd> the horizontal dimension for the augmented video frames.
+- <kbd>y_crop</kbd> the vertical dimension for the augmented video frames.
+- <kbd>batch_size</kbd> the batch size of images that used in each step of every training epoch.
+- <kbd>epochs</kbd> the number of training epochs used in creating a classifier model.
+- <kbd>verbose</kbd> display the adaptions made to each video frame throughout the data generation process.  
+- <kbd>samples_flag</kbd> in addition the RGBA output images (which exhibits transparency), choose to also store the RGB and greyscale components separately.
+- <kbd>CSV_flag</kbd> optionally store flat 1D array of 4D RGBA generated augmented images (not needed for training CNN).
+- <kbd>RGBA_flag</kbd> store the generated RGBA augmented images (required for training CNN).
+
+_The following global arguments are also used in this script:_
+- <kbd>data_types</kbd> ordered list of each of the augmentation scheme labels.
+
+</details>
+
+A video dataset that contains five different poses (sitting, standing, laying, bending, crawling), is augmented in the data generation script by superimposing joint markers onto the human silhouette. The joint locations are derived from OpenPose and are supplemented with additional information through the use of colour. The keypoint colour augmentations are applied based on either a radial or ringed colour wheel, which is notionally intended to encode spatial information based on the position of the joint. Four image datasets are generated, each providing varying degrees of supplemental information to encourage class similarity among related pose samples to promote accurate classification.
 
 <p align="center">
 <img src="https://github.com/dulocian/pose-classification/blob/main/images/B1-Sample.png"/>
 </p>
 
 ### <img src="https://user-images.githubusercontent.com/25181517/183423507-c056a6f9-1ba8-4312-a350-19bcbc5a8697.png" width="20" height="20" border="10"/> script.B2.VGGNetPoseClassifier.py
+
+<details>
+  <summary>script parameters and arguments</summary>
+
+_The following default arguments can be adapted in the parameters.conf file:_
+- <kbd>generated_dir</kbd> the path to the directory where the produced augmented image dataset is located.
+- <kbd>results_dir</kbd> path to the directory where the trained models, associated training logs, and the evaluation results are to be stored.
+- <kbd>x_axis</kbd> the horizontal dimension for the augmented video frames in the generated_dir.
+- <kbd>y_axis</kbd> the vertical dimension for the augmented video frames in the generated_dir.
+- <kbd>batch_size</kbd> the batch size of images that used in each step of every training epoch.
+- <kbd>epochs</kbd> the number of training epochs used in creating a classifier model.
+
+_The following global arguments are also used in this script:_
+- <kbd>data_types</kbd> ordered list of each of the augmentation scheme labels.
+
+</details>
+
 The structure of the CNN is inspired by the [VGGNet](https://doi.org/10.48550/arXiv.1409.1556) and is reproduced in script B2 to train and evaluate models on the image datasets generated by script B1. The VGGnet is illustrated below. The input layer of the network accepts an input image of size 156 x 108 x 4. The remainder of the network replicates the VGGNet with only its hyperparameters adjusted to favour the pose dataset.
 
 <p align="center">
