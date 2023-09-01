@@ -13,6 +13,9 @@ _The following default arguments can be adapted in the parameters.conf file:_
 - <kbd>max_sample_images</kbd> generated images are written as flat arrays to a .csv file, enabling this option allows for sample images to be created additionally.
 - <kbd>max_sample_dataset</kbd> is the maximum number of class samples to be included in the generated dataset.
 
+_The following global arguments are also used in this script:_
+- <kbd>dataset_dir</kbd> path to the directory where the generated pose dataset is written to and read for training.
+
 </details>
 
 The 18 localised key points and confidence scores predicated using OpenPose are used to generate a image dataset. The data generation script transforms the XY-coordinates into a collection of seven different datasets that each incorporates a different form of data augmentation. All of the sets depict the same OpenPose joint mappings but in different formats within 32x32 image frame.
@@ -33,6 +36,10 @@ _The following default arguments can be adapted in the parameters.conf file:_
 - <kbd>log_dir</kbd> the output directory to store the trained models and logs.
 - <kbd>batch_size</kbd> the batch size of images that used in each step of every training epoch.
 - <kbd>epochs</kbd> the number of training epochs used in creating a classifier model.
+
+_The following global arguments are also used in this script:_
+- <kbd>dataset_dir</kbd> path to the directory where the generated pose dataset is written to and read for training.
+
 
 </details>
 
@@ -62,6 +69,9 @@ _The following default arguments can be adapted in the parameters.conf file:_
 - <kbd>log_dir</kbd> the output directory to store the trained models and logs.
 - <kbd>batch_size</kbd> the batch size of images that used in each step of every training epoch.
 - <kbd>epochs</kbd> the number of training epochs used in creating a classifier model.
+
+_The following global arguments are also used in this script:_
+- <kbd>dataset_dir</kbd> path to the directory where the generated pose dataset is written to and read for training.
 
 </details>
 
