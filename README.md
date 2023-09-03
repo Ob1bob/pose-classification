@@ -1,5 +1,5 @@
 # Pose classification
-🎓 This repository holds my masters dissertation project submitted in 2023 at the North-West University titled 'Novel Data Augmentation Schemes for Pose Classification Using a Convolutional Neural Network'.
+🎓 This repository holds my masters dissertation project submitted in 2023 at the North-West University, South Africa titled 'Novel Data Augmentation Schemes for Pose Classification Using a Convolutional Neural Network'.
 
 📓 [Link to dissertation](https://www.nwu.ac.za "NWU Masters Dissertation") (_to be added once link is available_)
 
